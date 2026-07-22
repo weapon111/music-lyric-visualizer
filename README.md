@@ -179,6 +179,170 @@ server: {
 - **内容创作者**：用于直播、视频制作的背景素材
 - **英语学习者**：通过双语歌词学习英语
 
+## ❓ 常见问题与排错指南
+
+### 问题一：PowerShell 中 `npm run dev` 报错 "无法加载文件，禁止运行脚本"
+
+**问题描述**
+
+在 Windows PowerShell 中执行 `npm run dev` 或任何 `npm` 命令时，出现以下错误：
+
+```
+npm : 无法加载文件 C:\Program Files\nodejs\npm.ps1，因为在此系统上禁止运行脚本。
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+```
+
+**原因**
+
+PowerShell 的执行策略（Execution Policy）默认禁止运行 `.ps1` 脚本，而 `npm` 在 PowerShell 中是以 `npm.ps1` 脚本形式存在的，因此被系统拦截。
+
+**解决方案**
+
+#### 方案 A：使用命令提示符（cmd）运行（推荐，无需修改系统设置）
+
+直接使用 **命令提示符（Command Prompt / cmd）** 而非 PowerShell 执行命令。cmd 不受 PowerShell 执行策略限制，`npm` 命令可直接运行。
+
+1. 按 `Win + R`，输入 `cmd`，回车打开命令提示符
+2. 执行命令（注意 `cd /d` 用于跨盘符切换）：
+
+```cmd
+cd /d "d:\你的项目路径"
+npm run dev
+```
+
+#### 方案 B：修改 PowerShell 执行策略（永久解决）
+
+以**管理员身份**打开 PowerShell，执行：
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+输入 `Y` 确认。该策略允许运行本地脚本，但要求从互联网下载的脚本必须有数字签名，兼顾安全性与便利性。
+
+**验证方法**：关闭所有 PowerShell 窗口，重新打开后执行：
+
+```powershell
+Get-ExecutionPolicy
+```
+
+输出应为 `RemoteSigned`，此时 `npm` 命令可正常使用。
+
+---
+
+### 问题二：cmd 中 `cd` 切换目录后路径没变
+
+**问题描述**
+
+在 cmd 中执行 `cd D:\项目路径` 后，提示符仍然显示 `C:\Windows\System32>`，说明当前目录并未切换。
+
+**原因**
+
+在 Windows cmd 中，`cd` 命令默认只在**当前盘符**内切换目录，不会自动切换到另一个盘符。例如当前在 `C:` 盘，执行 `cd D:\xxx` 只会记录 D 盘的目标路径，但当前盘符仍然是 C 盘。
+
+**解决方案**
+
+使用 `cd /d` 参数（`/d` 表示 drive，即切换盘符）：
+
+```cmd
+cd /d "d:\智能家居物理AI能耗优化SaaS系统"
+```
+
+或者分两步执行：
+
+```cmd
+d:
+cd "智能家居物理AI能耗优化SaaS系统"
+```
+
+**验证方法**：执行后观察命令提示符，应显示为：
+
+```
+D:\智能家居物理AI能耗优化SaaS系统>
+```
+
+---
+
+### 问题三：浏览器访问 `http://localhost:5173` 无法打开
+
+**问题描述**
+
+浏览器显示 "无法访问此网站" 或 `ERR_CONNECTION_REFUSED`。
+
+**排查步骤**
+
+#### 第一步：确认 Vite 开发服务器是否启动
+
+查看运行 `npm run dev` 的终端窗口，正常启动应显示：
+
+```
+  VITE v5.x.x  ready in xxx ms
+
+  ➜  Local:   http://localhost:5173/
+```
+
+如果没有看到此输出，说明服务器启动失败，请检查终端中的错误信息。
+
+#### 第二步：确认后端代理服务器是否启动
+
+在另一个终端窗口运行 `node server.mjs`，正常启动应显示：
+
+```
+Proxy server running on http://localhost:3001
+```
+
+#### 第三步：检查端口是否被占用
+
+在 cmd 中执行：
+
+```cmd
+netstat -ano | findstr ":5173"
+netstat -ano | findstr ":3001"
+```
+
+如果有 `LISTENING` 状态的输出，说明端口已被监听，服务正常运行；如果没有输出，说明服务未启动。
+
+#### 第四步：使用 curl 验证服务响应
+
+```cmd
+curl -s -o NUL -w "HTTP %%{http_code}" http://localhost:5173/
+```
+
+- 返回 `HTTP 200`：前端服务正常
+- 返回 `HTTP 000` 或连接失败：服务未启动或端口被防火墙拦截
+
+#### 常见原因
+
+| 原因 | 解决方法 |
+|------|----------|
+| 服务器未启动 | 按启动指南在两个终端分别运行前端和后端 |
+| 端口被其他程序占用 | 修改 `vite.config.ts` 中的端口，或关闭占用端口的程序 |
+| 防火墙拦截 | 临时关闭防火墙测试，或将 Node.js 添加到防火墙白名单 |
+| 当前目录不对导致启动失败 | 确认 cmd 提示符显示的路径是项目根目录 |
+
+---
+
+### 问题四：歌词翻译失败或不显示
+
+**问题描述**
+
+播放音乐后歌词始终为空，或显示 "正在识别并翻译歌词" 后一直转圈。
+
+**排查步骤**
+
+1. **确认后端代理服务器是否运行**：翻译请求通过后端代理转发，若 `server.mjs` 未启动，翻译会失败
+2. **检查音乐是否有歌词信息**：部分纯音乐或小众歌曲可能搜索不到歌词
+3. **查看浏览器控制台**：按 `F12` 打开开发者工具，查看 Console 和 Network 标签中的错误信息
+
+**常见原因**
+
+- 后端代理未启动 → 启动 `node server.mjs`
+- 网络无法访问翻译服务 → 腾讯翻译君在国内可正常访问，如仍有问题可检查网络
+- 歌曲名称无法识别 → 可尝试使用更明确的音乐链接
+
+---
+
 ## 📝 贡献指南
 
 欢迎提交 Issue 和 Pull Request！
