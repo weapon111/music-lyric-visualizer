@@ -1,1 +1,1 @@
-vless://633e95d6-0972-42e2-a8ed-d1e7a6eb4bd8@8080-ieda5fqmlw02f3dmqcc0k.e2b.app:443?encryption=none&security=tls&sni=8080-ieda5fqmlw02f3dmqcc0k.e2b.app&fp=chrome&type=ws&host=8080-ieda5fqmlw02f3dmqcc0k.e2b.app&path=%2Fws#e2b-exit
+vless://90d8aac8-bd28-4c79-bfbb-c966eb0a1910@8080-i2vbqbmpc6g4i29liu6f8.e2b.app:443?encryption=none&security=tls&sni=8080-i2vbqbmpc6g4i29liu6f8.e2b.app&fp=chrome&type=ws&host=8080-i2vbqbmpc6g4i29liu6f8.e2b.app&path=%2Fws#e2b-exit
